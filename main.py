@@ -1,10 +1,21 @@
 # encoding: utf-8
 import requests
-import multiprocessing
 import bs4
 import os
+from multiprocessing import get_context
+# from multiprocessing import get_context,Process
+# from multiprocessing.queues import JoinableQueue
 
 from pprint import pprint
+
+
+def kubi_worker(queue, download_dir):
+    while not queue.empty():
+        item = queue.get()
+
+        pprint(item)
+
+        queue.task_done()
 
 
 def get_request_header():
@@ -21,8 +32,39 @@ def get_request_header():
     return header
 
 
+def generate_tasks(task_queue, lecture_list):
+    for i in lecture_list:
+        name = i.find(name='a', attrs='lecture-link')
+        name = name.contents[0].replace('\n', '')
+        print(name)
+        pdf_tag = i.find(title='PDF')
+        ppt_tag = i.find(title='PPT')
+        video_tag = i.find(title='Video (MP4)')
+        if pdf_tag:
+            task = {
+                'name': name,
+                'type': 'pdf',
+                'url': pdf_tag['href']
+            }
+            task_queue.put(task)
+        if ppt_tag:
+            task = {
+                'name': name,
+                'type': 'ppt',
+                'url': ppt_tag['href']
+            }
+            task_queue.put(task)
+        if video_tag:
+            task = {
+                'name': name,
+                'type': 'video',
+                'url': video_tag['href']
+            }
+            task_queue.put(task)
+
 if __name__ == '__main__':
     course_id = 'ai-001'
+    srt_lang = 'zh'
     login_page_url = 'https://accounts.coursera.org/'
     lecture_list_url = 'https://class.coursera.org/%s/lecture' % course_id
     login_url = ''
@@ -44,14 +86,20 @@ if __name__ == '__main__':
 
     soup = bs4.BeautifulSoup(response.content.decode())
     lecture_list = soup.find_all(name='li', attrs='viewed')
-    for i in lecture_list:
-        name = i.find(name='a', attrs='lecture-link')
-        print(name.contents[0].replace('\n', ''))
-        tag = i.find(title='PDF')
-        if tag:
-            print(tag['href'])
 
-        pprint(i.find(title='Video (MP4)')['href'])
+    download_dir = 'Lecture %s' % course_id
+    if not os.path.exists(download_dir):
+        os.mkdir(download_dir)
 
-    os.mkdir('Lecture %s' % course_id)
+    contex = get_context('fork')
+    task_queue = contex.JoinableQueue()
+    generate_tasks(task_queue, lecture_list)
+    # print(task_queue.qsize())
+    workers = []
+    for i in range(os.cpu_count()):
+        p = contex.Process(target=kubi_worker, args=(task_queue, download_dir))
+        p.start()
+        workers.append(p)
 
+    task_queue.join()
+    exit(0)
