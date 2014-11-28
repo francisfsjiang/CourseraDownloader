@@ -19,13 +19,23 @@ def kubi_worker(queue, download_dir, header, subtitles_lang):
         file_path = os.path.join(download_dir, file_name)
         print("Start downloading " + file_path)
         if item['type'] == 'mp4':
-            session = requests.Session()
-            session.headers = header
-            download_video(item['url'], file_path, session, subtitles_lang)
+            while True:
+                try:
+                    session = requests.Session()
+                    session.headers = header
+                    download_video(item['url'], file_path, session, subtitles_lang)
+                    break
+                except Exception as e:
+                    print(e)
         else:
-            download_file(item['url'], file_path)
+            while True:
+                try:
+                    download_file(item['url'], file_path)
+                    break
+                except Exception as e:
+                    print(e)
 
-
+        print("Finish downloading " + file_path)
         queue.task_done()
 
 
@@ -37,7 +47,7 @@ def download_video(url, file_path, header, subtitles_lang):
     soup = BeautifulSoup(response.content.decode())
     video_address = soup.video.source['src']
     print(video_address)
-    download_file(video_address, file_path, session)
+    download_file(video_address, file_path)
     #
     # subitles = soup.video.source.source.descendants
     subtitles = dict()
@@ -61,9 +71,9 @@ def download_file(url, file_path, session=requests.Session()):
     file_path = file_path + '.temp'
     r = session.get(url, stream=True)
     with open(file_path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=0x100000):
+        for chunk in r.iter_content(chunk_size=100*0x400):
             if chunk:
-                print(file_path + ' downloaded 1MB')
+                print(file_path + ' downloaded 100KB')
                 f.write(chunk)
                 f.flush()
     os.rename(file_path, file_path.replace('.temp', ''))
@@ -89,27 +99,27 @@ def generate_tasks(task_queue, lecture_list):
         name = i.find(name='a', attrs='lecture-link')
         name = name.contents[0].replace('\n', '')
         # print(name)
-        # pdf_tag = i.find(title='PDF')
-        # ppt_tag = i.find(title='PPT')
+        pdf_tag = i.find(title='PDF')
+        ppt_tag = i.find(title='PPT')
         video_tag = i.find(name='a', attrs='lecture-link')
-        # if pdf_tag:
-        #     task = {
-        #         'id': id,
-        #         'name': name,
-        #         'type': 'pdf',
-        #         'url': pdf_tag['href']
-        #     }
-        #     id += 1
-        #     task_queue.put(task)
-        # if ppt_tag:
-        #     task = {
-        #         'id': id,
-        #         'name': name,
-        #         'type': 'pptx',
-        #         'url': ppt_tag['href']
-        #     }
-        #     id += 1
-        #     task_queue.put(task)
+        if pdf_tag:
+            task = {
+                'id': id,
+                'name': name,
+                'type': 'pdf',
+                'url': pdf_tag['href']
+            }
+            id += 1
+            task_queue.put(task)
+        if ppt_tag:
+            task = {
+                'id': id,
+                'name': name,
+                'type': 'pptx',
+                'url': ppt_tag['href']
+            }
+            id += 1
+            task_queue.put(task)
         if video_tag:
             task = {
                 'id': id,
@@ -119,8 +129,9 @@ def generate_tasks(task_queue, lecture_list):
             }
             id += 1
             task_queue.put(task)
-        if id > 5:
-            return
+        if id > 20:
+            return id
+    return id
 
 
 if __name__ == '__main__':
@@ -135,7 +146,7 @@ if __name__ == '__main__':
     session.headers = header
     # pprint('SESSION HEADER\n')
     # pprint(dict(session.headers))
-
+    print('Getting Lecture List ...')
     response = session.get(lecture_list_url)
     # pprint(dict(response.headers))
     # pprint('SESSION HEADER\n')
@@ -157,18 +168,18 @@ if __name__ == '__main__':
 
     contex = get_context('fork')
     task_queue = contex.JoinableQueue()
-    generate_tasks(task_queue, lecture_list)
-    # print(task_queue.qsize())
+    num = generate_tasks(task_queue, lecture_list)
+    print('Get %d items' % num)
 
     workers = []
-    for i in range(2):
+    for i in range(4):
         p = contex.Process(target=kubi_worker, args=(task_queue, download_dir, header, subtitles_lang))
         p.start()
         workers.append(p)
-    while True:
-        pprint(task_queue.get())
     # while True:
-    #     kubi_worker(task_queue, download_dir, session, subtitles_lang)
+    #     pprint(task_queue.get())
+    # while True:
+    #     kubi_worker(task_queue, download_dir, header, subtitles_lang)
 
     task_queue.join()
     exit(0)
