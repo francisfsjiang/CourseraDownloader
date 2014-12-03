@@ -56,24 +56,28 @@ def download_video(url, file_path, header, subtitles_lang):
             subtitles[i['srclang']] = i['src']
             # print(i['src'], '+++++', i['srclang'])
 
+    # pprint(subtitles)
     subtitles_chosen = None
     for i in subtitles_lang:
+        # print(i)
         if i in subtitles:
             subtitles_chosen = subtitles[i]
+            break
     if subtitles_chosen:
         print(subtitles_chosen)
         download_file(subtitles_chosen, file_path.replace('.mp4', '.srt'))
 
 
 def download_file(url, file_path, session=requests.Session()):
+    print(url, file_path)
     if os.path.exists(file_path):
         return
     file_path = file_path + '.temp'
     r = session.get(url, stream=True)
     with open(file_path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=100*0x400):
+        for chunk in r.iter_content(chunk_size=1024*0x400):
             if chunk:
-                print(file_path + ' downloaded 100KB')
+                print(file_path + ' downloaded 1MB')
                 f.write(chunk)
                 f.flush()
     os.rename(file_path, file_path.replace('.temp', ''))
@@ -127,6 +131,7 @@ def generate_tasks(task_queue, lecture_list):
                 'type': 'mp4',
                 'url': video_tag['data-modal-iframe']
             }
+            print(task['url'])
             id += 1
             task_queue.put(task)
         if id > 20:
