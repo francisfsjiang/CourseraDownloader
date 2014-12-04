@@ -125,7 +125,9 @@ if __name__ == '__main__':
     task_list = []
     generate_tasks(task_list, lecture_list, session, subtitles_lang)
 
-    task_file = open(course_id + ' task_list.dump', 'wb')
+    if not os.path.exists(os.path.abspath('dumps')):
+        os.mkdir('dumps')
+    task_file = open('dumps/' + course_id + ' task_list.dump', 'wb')
     Pickler(task_file).dump(task_list)
     task_file.close()
 

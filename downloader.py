@@ -36,14 +36,14 @@ def download_file(url, file_path):
 
 
 if __name__ == '__main__':
-    course_id = 'ml-007'
+    # course_id = 'ml-007'
     # course_id = 'ai-001'
     # course_id = 'datascitoolbox-017'
     #course_id = 'rprog-017'
-    # course_id = sys.argv[1]
-    file = open(course_id + ' task_list.dump', 'rb')
-    task_list = Unpickler(file).load()
-    file.close()
+    course_id = sys.argv[1]
+    task_file = open('dumps/' + course_id + ' task_list.dump', 'rb')
+    task_list = Unpickler(task_file).load()
+    task_file.close()
     # pprint(task_list)
 
     download_dir = 'Lecture %s' % course_id

@@ -1,7 +1,7 @@
 .idea/
 request_header.txt
 Lecture [-a-zA-Z0-9-]*/
-*.dump
+dumps/
 clean_file.py
 
 # Byte-compiled / optimized / DLL files
