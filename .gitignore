@@ -1,6 +1,8 @@
 .idea/
 request_header.txt
 Lecture [-a-zA-Z0-9-]*/
+*.dump
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
