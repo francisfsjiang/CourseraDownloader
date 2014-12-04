@@ -114,9 +114,6 @@ if __name__ == '__main__':
         for j in i.children:
             lecture_list.append(j)
     print('get %d lectures' % len(lecture_list))
-    download_dir = 'Lecture %s' % course_id
-    if not os.path.exists(download_dir):
-        os.mkdir(download_dir)
 
 
     task_list = []
