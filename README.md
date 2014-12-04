@@ -3,6 +3,8 @@ CourseraDownloader
 
 CourseraDownloader - A downloader for Coursera lecture and subtitles, based on requests and multiprocessing lib
 
+**Usage:**
+
 First, put your cookie of coursera.org in `request_header.txt`
 
 Then the file should looks like this
