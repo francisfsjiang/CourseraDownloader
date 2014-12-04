@@ -41,7 +41,7 @@ Enter the course page and the the url looks like this
 
 **About language of srt**
 
-Change the propority list in the front of the `generate_tasks.py`.
+Change the priority list in the front of the `generate_tasks.py`.
 
 In this case, the 'zh-ch' srt will be download first, then is 'zh'
 
