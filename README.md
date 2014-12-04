@@ -1,11 +1,47 @@
 CourseraDownloader
 ==================
 
-CourseraDownloader - A downloader for Coursera lecture and subtitles, based on requests and multiprocessing
+CourseraDownloader - A downloader for Coursera lecture and subtitles, based on requests and multiprocessing lib
+
+First, put your cookie of coursera.org in `request_header.txt`
+
+Then the file should looks like this
+
+	User-Agent: Mozilla/5.0 (Macintosh; Inte.....
+	Accept: text/html,application/xhtml+xm.....
+	Accept-Language: zh-cn,zh;q=0.8,e....
+	Accept-Encoding: gzip, deflate
+	Cookie: csrf_token=.....
+	Connection: keep-alive
+
+You can copy your request header of coursera.orgs in firebug or other browser-buildin devtools
 
 
-嗯，尚未完工，鉴于天朝到cloudfront的网络状况，需要断点续传，坑，待填
+Then, Generate the download task list.
 
-	python3 generate_task_list.py ml-007
+	python3 generate_tasks.py lecture_id
 	
-	python3 downloader.py ml-007
+Excute download cmd.
+	
+	python3 downloader.py lecture_id
+
+
+
+P.S.
+
+**What is `lecture_id` ?**
+
+Enter the course page and the the url looks like this
+
+	https://class.coursera.org/ml-007
+	
+`ml-007` is your course id
+
+**About language of srt**
+
+Change the propority list in the front of the `generate_tasks.py`.
+
+In this case, the 'zh-ch' srt will be download first, then is 'zh'
+
+	#change the order of this list to change the best str lang to download
+	subtitles_lang = ['zh-cn', 'zh', 'en']

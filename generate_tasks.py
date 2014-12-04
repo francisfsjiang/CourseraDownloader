@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3
 # encoding: utf-8
 import requests
 import bs4
@@ -11,6 +12,8 @@ import re
 from bs4 import BeautifulSoup, element
 
 
+#change the order of this list to change the best str lang to download
+subtitles_lang = ['zh-cn', 'zh', 'cn', 'en']
 
 
 def get_request_header():
@@ -19,9 +22,7 @@ def get_request_header():
     for i in file.readlines():
         i = i.replace('\n', '')
         i = i.split(': ')
-        # print(i)
         key, item = i[0], i[1]
-        # print(key, item)
         if key in ['User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Cookie', 'Connection']:
             header[key] = item
     return header
@@ -29,17 +30,13 @@ def get_request_header():
 
 def generate_tasks(task_list, lecture_list, session, subtitles_lang):
     for i in lecture_list:
-        # name = i.find(name='a', attrs='lecture-link')
-        # name = name.contents[0].replace('\n', '')
         video_tag = i.find(title='Video (MP4)')
         video_view_url = i.find(attrs='lecture-link')['data-modal-iframe']
         if video_tag:
             video_page_url = video_tag['href']
-            # print(video_page_url)
             resp = session.get(video_page_url, allow_redirects=False)
             video_url = resp.headers['Location']
             video_name = unquote(unquote(urlparse(resp.headers['Location']).query).replace(' ', '').split(';')[1][10:-1])
-            # video_name = video_name.replace('/', '_').replace('\\', '_').replace(':', '_').replace('？', '')
             video_name = re.sub(r'[/\\:\?<>\|]', '_', video_name)
             task = {
                 'name': video_name,
@@ -48,6 +45,8 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
             }
             task_list.append(task)
             pprint(task)
+        else:
+            continue
 
         resource = [('PDF', '.pdf'),
                     ('Lecture Notes', '.pdf'),
@@ -70,16 +69,12 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
         for i in soup.video.source.source.descendants:
             if type(i) != element.NavigableString:
                 subtitles[i['srclang']] = i['src']
-                # print(i['src'], '+++++', i['srclang'])
 
-        # pprint(subtitles)
         subtitles_chosen = None
         for i in subtitles_lang:
-            # print(i)
             if i in subtitles:
                 subtitles_chosen = subtitles[i]
                 break
-        # print(subtitles_chosen)
         if subtitles_chosen:
             task = {
                 'name': video_name.replace('.mp4', '.srt'),
@@ -91,27 +86,20 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
 
 
 if __name__ == '__main__':
-    # course_id = 'ml-007'
-    # course_id = 'ai-001'
-    # course_id = 'datascitoolbox-017'
-    # course_id = 'rprog-017'
+    if not os.path.exists('request_header.txt'):
+        print('request_header.txt not found.')
+        exit(0)
+    if len(sys.argv) < 2:
+        print('Usage: python3 generate_tasks.py lecture_id')
+        exit(0)
     course_id = sys.argv[1]
-    subtitles_lang = ['zh-cn', 'zh', 'cn', 'en']
-    login_page_url = 'https://accounts.coursera.org/'
     lecture_list_url = 'https://class.coursera.org/%s/lecture' % course_id
-    login_url = ''
     session = requests.Session()
 
     header = get_request_header()
     session.headers = header
     print('Getting Lecture List ...')
     response = session.get(lecture_list_url)
-    # pprint('SESSION HEADER\n')
-    # pprint(dict(session.headers))
-    # pprint('SESSION COOKIE\n')
-    # pprint(dict(session.cookies))
-    # pprint(dict(response.headers))
-    # pprint(response.content.decode())
 
     soup = bs4.BeautifulSoup(response.content.decode())
     lecture_sections = soup.find_all(name='ul', attrs='course-item-list-section-list')
@@ -120,7 +108,6 @@ if __name__ == '__main__':
         for j in i.children:
             lecture_list.append(j)
     print('get %d lectures' % len(lecture_list))
-
 
     task_list = []
     generate_tasks(task_list, lecture_list, session, subtitles_lang)
@@ -131,7 +118,6 @@ if __name__ == '__main__':
     Pickler(task_file).dump(task_list)
     task_file.close()
 
-    for i in task_list:
-        pprint(i)
+    print('Generate successfully.')
     exit(0)
 
