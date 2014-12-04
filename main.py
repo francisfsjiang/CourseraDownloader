@@ -2,9 +2,11 @@
 import requests
 import bs4
 import os
+import sys
 from pickle import Pickler
 from pprint import pprint
 from urllib.parse import unquote, urlparse
+import re
 
 from bs4 import BeautifulSoup, element
 
@@ -37,6 +39,8 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
             resp = session.get(video_page_url, allow_redirects=False)
             video_url = resp.headers['Location']
             video_name = unquote(unquote(urlparse(resp.headers['Location']).query).replace(' ', '').split(';')[1][10:-1])
+            # video_name = video_name.replace('/', '_').replace('\\', '_').replace(':', '_').replace('？', '')
+            video_name = re.sub(r'[/\\:\?<>\|]', '_', video_name)
             task = {
                 'name': video_name,
                 'type': 'mp4',
@@ -49,16 +53,16 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
                     ('Lecture Notes', '.pdf'),
                     ('Slides', '.pdf'),
         ]
-        for m, n in resource:
-            tag = i.find(title=m)
-            if tag:
-                task = {
-                    'name': video_name.replace('.mp4', n),
-                    'type': n[1:],
-                    'url': tag['href']
-                }
-                task_list.append(task)
-                pprint(task)
+        # for m, n in resource:
+        #     tag = i.find(title=m)
+        #     if tag:
+        #         task = {
+        #             'name': video_name.replace('.mp4', n),
+        #             'type': n[1:],
+        #             'url': tag['href']
+        #         }
+        #         task_list.append(task)
+        #         pprint(task)
 
         resp = session.get(video_view_url)
         soup = BeautifulSoup(resp.content.decode())
@@ -75,8 +79,7 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
             if i in subtitles:
                 subtitles_chosen = subtitles[i]
                 break
-        if subtitles_chosen:
-            print(subtitles_chosen)
+        # print(subtitles_chosen)
         if subtitles_chosen:
             task = {
                 'name': video_name.replace('.mp4', '.srt'),
@@ -88,8 +91,11 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
 
 
 if __name__ == '__main__':
-    course_id = 'ml-007'
+    # course_id = 'ml-007'
+    # course_id = 'ai-001'
+    # course_id = 'datascitoolbox-017'
     # course_id = 'rprog-017'
+    course_id = sys.argv[1]
     subtitles_lang = ['zh-cn', 'zh', 'cn', 'en']
     login_page_url = 'https://accounts.coursera.org/'
     lecture_list_url = 'https://class.coursera.org/%s/lecture' % course_id

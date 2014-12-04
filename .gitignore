@@ -2,6 +2,7 @@
 request_header.txt
 Lecture [-a-zA-Z0-9-]*/
 *.dump
+clean_file.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
