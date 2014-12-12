@@ -52,7 +52,7 @@ if __name__ == '__main__':
     for i in task_list:
         print(i)
         task_queue.put(i)
-    for i in range(1):
+    for i in range(os.cpu_count()*2):
         p = context.Process(target=kubi_worker, args=(task_queue, download_dir))
         p.start()
         workers.append(p)
