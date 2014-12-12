@@ -4,38 +4,47 @@ import os
 import sys
 import time
 from pickle import Unpickler
-from multiprocessing import get_context
 from requests import get
+from threading import Thread, RLock
+from queue import Queue
+
+TASK_QUEUE = Queue()
+TASK_LOCK = RLock()
 
 
-def kubi_worker(id, queue, download_dir):
-    try:
-        while not queue.empty():
-            print(queue.qsize())
-            item = queue.get()
+class Worker(Thread):
+    def __init__(self, id, download_dir):
+        super().__init__()
+        self.id = id
+        self.download_dir = download_dir
+
+    def run(self):
+        while 1:
+            with TASK_LOCK:
+                if TASK_QUEUE.empty():
+                    break
+                item = TASK_QUEUE.get()
 
             file_path = os.path.join(download_dir, item['name'])
-            download_file(item['url'], file_path)
+            self.download_file(item['url'], file_path)
 
-            # print("Finish downloading " + file_path)
+            print("Finish downloading " + file_path)
             # queue.task_done()
-    except Exception as e:
-        print('process %d exited.(%s)' % (id, e))
 
-
-def download_file(url, file_path):
-    if os.path.exists(file_path):
-        return
-    print("Start downloading " + file_path)
-    file_path = file_path + '.temp'
-    r = get(url, stream=True)
-    with open(file_path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024*0x400):
-            if chunk:
-                print(file_path + ' downloaded 1MB')
-                f.write(chunk)
-                f.flush()
-    os.rename(file_path, file_path.replace('.temp', ''))
+    @staticmethod
+    def download_file(url, file_path):
+        if os.path.exists(file_path):
+            return
+        # print("Start downloading " + file_path)
+        file_path += '.temp'
+        r = get(url, stream=True)
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024*0x400):
+                if chunk:
+                    print(file_path + ' downloaded 1MB')
+                    f.write(chunk)
+                    f.flush()
+        os.rename(file_path, file_path.replace('.temp', ''))
 
 
 if __name__ == '__main__':
@@ -52,22 +61,15 @@ if __name__ == '__main__':
         os.mkdir(download_dir)
 
     workers = []
-    context = get_context()
-    task_queue = context.Queue()
     for i in task_list:
         # print(i)
-        task_queue.put(i)
+        TASK_QUEUE.put(i)
     for i in range(os.cpu_count()*2):
-        p = context.Process(target=kubi_worker, args=(i, task_queue, download_dir))
+        p = Worker(i, download_dir)
         p.start()
         workers.append(p)
 
-    # for i in workers:
-    #     i.join()
-
-    # task_queue.join()
-    while not task_queue.empty():
-        print(task_queue.qsize())
-        time.sleep(5)
+    for i in workers:
+        i.join()
     exit(0)
 
