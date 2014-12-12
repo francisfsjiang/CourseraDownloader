@@ -15,13 +15,14 @@ def kubi_worker(queue, download_dir):
         file_path = os.path.join(download_dir, item['name'])
         download_file(item['url'], file_path)
 
-        print("Finish downloading " + file_path)
+        # print("Finish downloading " + file_path)
         queue.task_done()
 
 
 def download_file(url, file_path):
     if os.path.exists(file_path):
         return
+    print("Start downloading " + file_path)
     file_path = file_path + '.temp'
     r = get(url, stream=True)
     with open(file_path, 'wb') as f:
@@ -50,14 +51,19 @@ if __name__ == '__main__':
     context = get_context()
     task_queue = context.JoinableQueue()
     for i in task_list:
-        print(i)
+        # print(i)
         task_queue.put(i)
     for i in range(os.cpu_count()*2):
         p = context.Process(target=kubi_worker, args=(task_queue, download_dir))
         p.start()
         workers.append(p)
 
-    while not task_queue.empty():
-        time.sleep(5)
-    exit(0)
+    for i in workers:
+        i.join()
+
+    # task_queue.join()
+    # while not task_queue.empty():
+    #     print(task_queue.size())
+    #     time.sleep(5)
+    # exit(0)
 
