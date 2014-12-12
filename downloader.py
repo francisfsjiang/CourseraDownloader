@@ -8,15 +8,19 @@ from multiprocessing import get_context
 from requests import get
 
 
-def kubi_worker(queue, download_dir):
-    while not queue.empty():
-        item = queue.get()
+def kubi_worker(id, queue, download_dir):
+    try:
+        while not queue.empty():
+            print(queue.qsize())
+            item = queue.get()
 
-        file_path = os.path.join(download_dir, item['name'])
-        download_file(item['url'], file_path)
+            file_path = os.path.join(download_dir, item['name'])
+            download_file(item['url'], file_path)
 
-        # print("Finish downloading " + file_path)
-        queue.task_done()
+            # print("Finish downloading " + file_path)
+            # queue.task_done()
+    except Exception as e:
+        print('process %d exited.(%s)' % (id, e))
 
 
 def download_file(url, file_path):
@@ -49,21 +53,21 @@ if __name__ == '__main__':
 
     workers = []
     context = get_context()
-    task_queue = context.JoinableQueue()
+    task_queue = context.Queue()
     for i in task_list:
         # print(i)
         task_queue.put(i)
     for i in range(os.cpu_count()*2):
-        p = context.Process(target=kubi_worker, args=(task_queue, download_dir))
+        p = context.Process(target=kubi_worker, args=(i, task_queue, download_dir))
         p.start()
         workers.append(p)
 
-    for i in workers:
-        i.join()
+    # for i in workers:
+    #     i.join()
 
     # task_queue.join()
-    # while not task_queue.empty():
-    #     print(task_queue.size())
-    #     time.sleep(5)
-    # exit(0)
+    while not task_queue.empty():
+        print(task_queue.qsize())
+        time.sleep(5)
+    exit(0)
 
