@@ -16,7 +16,7 @@ Then the file should looks like this
 	Cookie: csrf_token=.....
 	Connection: keep-alive
 
-You can copy your request header of coursera.orgs in firebug or other browser-buildin devtools
+You can copy your request header of coursera.org in firebug or other browser-buildin devtools
 
 
 Then, Generate the download task list.
@@ -29,7 +29,7 @@ Excute download cmd.
 
 
 
-P.S.
+###Notice
 
 **What is `lecture_id` ?**
 
