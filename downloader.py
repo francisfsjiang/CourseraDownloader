@@ -62,7 +62,6 @@ if __name__ == '__main__':
 
     workers = []
     for i in task_list:
-        # print(i)
         TASK_QUEUE.put(i)
     for i in range(os.cpu_count()*2):
         p = Worker(i, download_dir)
