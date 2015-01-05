@@ -20,6 +20,8 @@ def get_request_header():
     file = open('request_header.txt', 'r')
     header = dict()
     for i in file.readlines():
+        if i == "\n":
+            continue
         i = i.replace('\n', '')
         i = i.split(': ')
         key, item = i[0], i[1]
