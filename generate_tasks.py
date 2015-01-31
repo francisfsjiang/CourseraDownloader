@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup, element
 
 
 #change the order of this list to change the best str lang to download
-subtitles_lang = ['zh-cn', 'zh', 'cn', 'en']
+subtitles_lang = ['zh-cn', 'zh-tw', 'zh', 'cn', 'en']
 
 
 def get_request_header():
