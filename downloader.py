@@ -25,7 +25,7 @@ class Worker(Thread):
                     break
                 item = TASK_QUEUE.get()
 
-            file_path = os.path.join(download_dir, item['name'])
+            file_path = os.path.join(self.download_dir, item['name'])
             self.download_file(item['url'], file_path)
 
             print("Finish downloading " + file_path)
@@ -47,15 +47,7 @@ class Worker(Thread):
         os.rename(file_path, file_path.replace('.temp', ''))
 
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('Usage: python3 downloader.py lecture_id')
-        exit(0)
-    course_id = sys.argv[1]
-    task_file = open('dumps/' + course_id + ' task_list.dump', 'rb')
-    task_list = Unpickler(task_file).load()
-    task_file.close()
-
+def download(course_id, task_list):
     download_dir = 'Lecture %s' % course_id
     if not os.path.exists(download_dir):
         os.mkdir(download_dir)

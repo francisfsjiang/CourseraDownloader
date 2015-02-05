@@ -19,14 +19,9 @@ Then the file should looks like this
 You can copy your request header of coursera.org in firebug or other browser-buildin devtools
 
 
-Then, Generate the download task list.
+Then, Get start.
 
-	python3 generate_tasks.py lecture_id
-	
-Excute download cmd.
-	
-	python3 downloader.py lecture_id
-
+	python3 main.py lecture_id
 
 
 ###Notice

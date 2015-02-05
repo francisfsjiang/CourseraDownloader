@@ -11,6 +11,8 @@ import re
 
 from bs4 import BeautifulSoup, element
 
+import downloader
+
 
 #change the order of this list to change the best str lang to download
 subtitles_lang = ['zh-cn', 'zh-tw', 'zh', 'cn', 'en']
@@ -113,13 +115,9 @@ if __name__ == '__main__':
 
     task_list = []
     generate_tasks(task_list, lecture_list, session, subtitles_lang)
-
-    if not os.path.exists(os.path.abspath('dumps')):
-        os.mkdir('dumps')
-    task_file = open('dumps/' + course_id + ' task_list.dump', 'wb')
-    Pickler(task_file).dump(task_list)
-    task_file.close()
-
     print('Generate successfully.')
+
+    downloader.download(course_id, task_list)
+
     exit(0)
 
