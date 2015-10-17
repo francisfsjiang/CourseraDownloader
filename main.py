@@ -70,8 +70,8 @@ def generate_tasks(task_list, lecture_list, session, subtitles_lang):
         resp = session.get(video_view_url)
         soup = BeautifulSoup(resp.content.decode())
         subtitles = dict()
-        for i in soup.video.source.source.descendants:
-            if type(i) != element.NavigableString:
+        for i in soup.video.descendants:
+            if i.name == "track":
                 subtitles[i['srclang']] = i['src']
 
         subtitles_chosen = None
